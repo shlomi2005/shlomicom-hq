@@ -68,6 +68,12 @@ a{color:var(--accent2)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex:none}
 .dot.live{background:var(--ok);box-shadow:0 0 0 0 #34d39988;animation:pulse 1.8s infinite}
 .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+.fresh .sep{width:1px;height:14px;background:var(--line2)}
+.fresh b{font-weight:600;color:var(--text)}
+.avatar{position:relative}
+.avatar.on::after{content:"";position:absolute;inset-inline-end:-3px;bottom:-3px;width:11px;height:11px;border-radius:50%;background:var(--ok);border:2px solid var(--card)}
+@keyframes flashin{from{box-shadow:0 0 0 2px #5ad1ff99;background:#16304a}to{box-shadow:none}}
+.msg.new,.rc.new{animation:flashin 2.4s ease-out}
 @keyframes pulse{0%{box-shadow:0 0 0 0 #34d39977}70%{box-shadow:0 0 0 9px #34d39900}100%{box-shadow:0 0 0 0 #34d39900}}
 
 .bottomnav{position:fixed;inset:auto 0 0 0;z-index:10;display:grid;grid-template-columns:repeat(5,1fr);
@@ -212,7 +218,7 @@ details.logd[open] summary{margin-bottom:8px}
   <main class="main">
     <header class="topbar">
       <div class="brand"><div class="logo">S</div><div><h1>Shlomicom</h1></div></div>
-      <span class="fresh" id="fresh"><span class="dot" id="freshDot"></span><span id="freshTxt">מתחבר…</span></span>
+      <span class="fresh" id="fresh" role="status"><span class="dot" id="liveDot"></span><span id="liveTxt">חי</span><span class="sep"></span><span class="dot" id="freshDot"></span><span id="freshTxt">מתחבר…</span></span>
     </header>
     <div id="view"></div>
   </main>
@@ -273,6 +279,15 @@ async function fetchEnvelope(){
       {headers:{Accept:"application/vnd.github.raw+json", Authorization:`Bearer ${token}`}, cache:"no-store"});
     if (r.ok) return r.json();
   }
+  if (onPages && t - (fetchEnvelope._api || 0) > 75000 && t > (fetchEnvelope._apiBlock || 0)){ // 60 req/h/IP without a token
+    fetchEnvelope._api = t;
+    try{
+      const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/data.enc.json?ref=data`,
+        {headers:{Accept:"application/vnd.github.raw+json"}, cache:"no-store"});
+      if (r.ok) return r.json();
+      if (r.status === 403 || r.status === 429) fetchEnvelope._apiBlock = t + 600000;
+    }catch{}
+  }
   const url = onPages ? `https://raw.githubusercontent.com/${OWNER}/${REPO}/data/data.enc.json?t=${t}` : `./data.enc.json?t=${t}`;
   const r = await fetch(url, {cache:"no-store"});
   if (!r.ok) throw new Error("HTTP " + r.status);
@@ -283,12 +298,92 @@ async function refresh(){
   try{
     const env = await fetchEnvelope();
     const d = await decryptEnv(env, PASS);
-    if (!DATA || d.seq >= DATA.seq){ DATA = d; LAST_OK = Date.now(); LAST_ERR = ""; render(); }
+    if (!DATA || d.seq >= DATA.seq){ DATA = d; applyLive(); LAST_OK = Date.now(); LAST_ERR = ""; render(); liveConnect(); }
   }catch(e){
     if (e && e.name === "OperationError"){ lockOut("מילת הסיסמה השמורה כבר לא פותחת את הנתונים — הקלד אותה מחדש"); return; }
     LAST_ERR = e.message || String(e);
   }
   paintFresh();
+}
+
+/* ================= live channel (ntfy.sh, ciphertext only) ================= */
+// Topic = "hq" + hex(HKDF(PBKDF2(pass, fixed salt, 250k), info "shlomicom-live-topic"))[:16 bytes] — derived here,
+// never shipped in the site or the repo. Messages: same AES-GCM envelope as the snapshot, sess/seq/sent inside.
+const LIVE = {es:null, topic:null, topicFor:null, state:"off", lastEvt:0, lastSent:0, backoff:1000, timer:null,
+  seqs:{}, items:{corridor:[], chairman:[], private:{}, receipts:[]}, workers:{}, writing:{}, fresh:new Set(), got:[]};
+async function liveTopic(pass){
+  if (LIVE.topicFor === pass && LIVE.topic) return LIVE.topic;
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveBits"]);
+  const master = await crypto.subtle.deriveBits({name:"PBKDF2", hash:"SHA-256", salt:enc.encode("shlomicom-hq-live-topic-v1"), iterations:250000}, base, 256);
+  const hk = await crypto.subtle.importKey("raw", master, "HKDF", false, ["deriveBits"]);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({name:"HKDF", hash:"SHA-256", salt:new Uint8Array(32), info:enc.encode("shlomicom-live-topic")}, hk, 128));
+  LIVE.topic = "hq" + [...bits].map(b => b.toString(16).padStart(2,"0")).join(""); LIVE.topicFor = pass;
+  return LIVE.topic;
+}
+function liveClose(){ clearTimeout(LIVE.timer); if (LIVE.es){ LIVE.es.close(); LIVE.es = null; } }
+async function liveConnect(){
+  if (!PASS || !DATA?.live?.enabled){ if (LIVE.state !== "off"){ liveClose(); LIVE.state = "off"; paintFresh(); } return; }
+  if (LIVE.es) return;
+  const topic = await liveTopic(PASS);
+  if (LIVE.es || !PASS) return;
+  const server = (DATA.live.server || "https://ntfy.sh").replace(/\/$/, "");
+  LIVE.state = "connecting"; paintFresh();
+  const es = LIVE.es = new EventSource(`${server}/${topic}/sse`);
+  const seen = () => { LIVE.lastEvt = Date.now(); if (LIVE.state !== "on"){ LIVE.state = "on"; LIVE.backoff = 1000; paintFresh(); } };
+  es.addEventListener("open", seen);
+  es.addEventListener("keepalive", seen);
+  es.onopen = seen;
+  es.onmessage = (ev) => { seen(); liveMessage(ev.data); };
+  es.onerror = () => { // our own backoff instead of EventSource's fixed retry
+    if (es !== LIVE.es) return;
+    liveClose(); LIVE.state = "retry"; paintFresh();
+    LIVE.timer = setTimeout(liveConnect, LIVE.backoff); LIVE.backoff = Math.min(LIVE.backoff * 2, 30000);
+  };
+}
+setInterval(() => { // watchdog: ntfy sends a keepalive every ~45 s; silence for 100 s = dead socket (phone sleep, NAT)
+  if (LIVE.es && Date.now() - LIVE.lastEvt > 100000){ liveClose(); LIVE.state = "retry"; paintFresh(); liveConnect(); }
+}, 5000);
+async function liveMessage(raw){
+  let m;
+  try{
+    const outer = JSON.parse(raw);
+    if (outer.event && outer.event !== "message") return;
+    m = await decryptEnv(JSON.parse(outer.message ?? raw), PASS);
+  }catch{ return; } // not ours / tampered / wrong key: ignore silently
+  if (m.v !== 1 || m.t !== "ev" || typeof m.seq !== "number") return;
+  if (m.seq <= (LIVE.seqs[m.sess] || 0) || Date.now() - m.sent > 300000) return; // replay / stale (T7)
+  LIVE.seqs[m.sess] = m.seq; LIVE.lastSent = Math.max(LIVE.lastSent, m.sent);
+  const now = Date.now();
+  LIVE.got.push({seq:m.seq, sent:m.sent, at:now}); if (LIVE.got.length > 200) LIVE.got.shift();
+  const add = (arr, xs) => { for (const x of xs || []){ arr.push({...x, _at:now}); LIVE.fresh.add(itemKey(x)); } };
+  add(LIVE.items.corridor, m.corridor); add(LIVE.items.chairman, m.chairman); add(LIVE.items.receipts, m.receipts);
+  for (const [s, xs] of Object.entries(m.private || {})) add(LIVE.items.private[s] ||= [], xs);
+  for (const [s, w] of Object.entries(m.workers || {})) LIVE.workers[s] = {...w, _at:m.sent};
+  for (const [s, line] of Object.entries(m.writing || {})) LIVE.writing[s] = {line, _at:m.sent};
+  applyLive(); render(); paintFresh();
+  setTimeout(() => LIVE.fresh.clear(), 3000);
+}
+const itemKey = x => x.file || `${x.ts}|${x.from}|${x.to}|${(x.text || "").slice(0, 40)}`;
+function mergeInto(list, extra){
+  const have = new Set(list.map(itemKey));
+  for (const x of extra){ if (!have.has(itemKey(x))){ const {_at, ...y} = x; list.push(y); have.add(itemKey(x)); } }
+  return list.sort((a, b) => tsOf(a.ts) - tsOf(b.ts));
+}
+function applyLive(){ // live items stay until the (slower) GitHub snapshot has them too; then the snapshot wins
+  if (!DATA) return;
+  const cut = Date.now() - 20 * 60000, gen = tsOf(DATA.generated);
+  for (const k of ["corridor", "chairman", "receipts"]) LIVE.items[k] = LIVE.items[k].filter(x => x._at > cut);
+  mergeInto(DATA.corridor, LIVE.items.corridor); mergeInto(DATA.chairman, LIVE.items.chairman); mergeInto(DATA.receipts, LIVE.items.receipts);
+  DATA.private ||= {};
+  for (const [s, xs] of Object.entries(LIVE.items.private)){ LIVE.items.private[s] = xs.filter(x => x._at > cut); mergeInto(DATA.private[s] ||= [], LIVE.items.private[s]); }
+  for (const w of DATA.workers || []){
+    const lw = LIVE.workers[w.slug];
+    if (lw && lw._at > gen){ w.status = lw.status; w.started = lw.started; if (lw.task) w.task = lw.task; }
+    const wr = LIVE.writing[w.slug];
+    if (wr && wr._at > gen){ w.log_tail = [...(w.log_tail || []).filter(l => l !== wr.line), wr.line].slice(-14); w.log_updated = new Date(wr._at).toISOString(); }
+  }
+  DATA.active_count = (DATA.workers || []).filter(w => w.status !== "idle").length;
 }
 
 /* ================= helpers ================= */
@@ -322,7 +417,7 @@ function nameOf(slug){ if (slug === "chairman") return "שלמה"; if (slug === 
 function avatar(slug){
   const m = member(slug);
   const bg = slug === "chairman" ? "var(--warn)" : (m ? ENGINE_COLOR[m.engine] : "#6b7280");
-  return h("div", {class:"avatar", style:`background:${bg}`}, (nameOf(slug) || "?").trim()[0]);
+  return h("div", {class:"avatar" + (m && m.status !== "idle" ? " on" : ""), style:`background:${bg}`, title: m && m.status !== "idle" ? "מחובר/ת ועובד/ת" : null}, (nameOf(slug) || "?").trim()[0]);
 }
 const tsOf = s => { const t = Date.parse(s); return isNaN(t) ? 0 : t; };
 function hhmm(s){ const t = tsOf(s); if (!t) return ""; return new Date(t).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"}); }
@@ -414,13 +509,13 @@ function idleChip(w){
 function msgEl(m, clamp){
   const chair = m.from === "chairman";
   const sys = /^(התחלתי משימה|סיים משימה|נכשל משימה|נעצר משימה|קבלה (עברה|נכשלה))/.test(m.text || "");
-  return h("div",{class:"msg" + (chair ? " chair" : "") + (sys ? " sys" : "")}, avatar(m.from),
+  return h("div",{class:"msg" + (chair ? " chair" : "") + (sys ? " sys" : "") + (LIVE.fresh.has(itemKey(m)) ? " new" : "")}, avatar(m.from),
     h("div",{class:"body"},
       h("div",{class:"hdr"}, h("b",{}, nameOf(m.from)), h("span",{}, "← " + nameOf(m.to)), m.via === "hq" ? h("span",{class:"chip"},"מחדר הבקרה") : null, h("time",{title:m.ts}, hhmm(m.ts))),
       h("div",{class:"txt" + (clamp ? " clamp" : ""), dir:"auto", title: clamp ? "לחץ להרחבה" : null, onclick:(e)=>e.currentTarget.classList.remove("clamp")}, m.text)));
 }
 function receiptEl(r){
-  return h("div",{class:"rc"},
+  return h("div",{class:"rc" + (LIVE.fresh.has(itemKey(r)) ? " new" : "")},
     h("span",{class:"pill " + (r.pass ? "pass" : "fail")}, r.pass ? "עברה" : "נכשלה"),
     h("div",{class:"who"}, nameOf(r.slug) + " · ", h("span",{dir:"ltr"}, r.task_id)),
     h("time",{}, hhmm(r.ts)),
@@ -503,11 +598,16 @@ function render(){
   [...v.querySelectorAll(".term")].forEach((t,i) => { t.scrollTop = openScroll[i] ?? t.scrollHeight; });
 }
 function paintFresh(){
+  const ld = document.getElementById("liveDot"), lt = document.getElementById("liveTxt");
+  const [lc, ltxt, ltip] = {on:["live","מחובר · חי","ערוץ חי מחובר — הודעות חשובות מגיעות תוך שניות"],
+    connecting:["warn","מתחבר…","מתחבר לערוץ החי"], retry:["bad","לא מחובר","הערוץ החי התנתק — מנסה שוב; בינתיים עדכון מ-GitHub"],
+    off:["","חי כבוי","הערוץ החי כבוי — עדכון מ-GitHub בלבד"]}[LIVE.state];
+  ld.className = "dot " + lc; lt.textContent = ltxt; document.getElementById("fresh").title = ltip;
   const dot = document.getElementById("freshDot"), txt = document.getElementById("freshTxt");
   if (!DATA){ dot.className = "dot" + (LAST_ERR ? " bad" : ""); txt.textContent = LAST_ERR ? "אין נתונים: " + LAST_ERR : "מתחבר…"; return; }
-  const age = Date.now() - tsOf(DATA.generated);
-  dot.className = "dot " + (age < 60000 ? "live" : age < 180000 ? "warn" : "bad");
-  txt.textContent = "עודכן " + ago(age) + (LAST_ERR ? " · שגיאת רשת" : "");
+  const age = Date.now() - Math.max(tsOf(DATA.generated), LIVE.lastSent); // Mac heartbeat = newest of snapshot / live message
+  dot.className = "dot " + (age < 300000 ? "live" : age < 900000 ? "warn" : "bad");
+  txt.textContent = "מק " + ago(age) + (LAST_ERR ? " · שגיאת רשת" : "");
 }
 
 /* ================= lock ================= */
@@ -535,7 +635,7 @@ const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
   inp.addEventListener("input", () => hint.classList.toggle("hidden", !HEB.test(inp.value)));
 })();
 function lockOut(msg){
-  PASS = null; LS.del("hq.pass"); DATA = null;
+  PASS = null; LS.del("hq.pass"); DATA = null; liveClose(); LIVE.state = "off";
   document.getElementById("app").classList.add("hidden");
   document.getElementById("lock").classList.remove("hidden");
   const err = document.getElementById("lockErr"); err.textContent = msg || ""; err.classList.remove("net");
@@ -570,12 +670,12 @@ document.addEventListener("focusout", () => { if (render._pending){ setTimeout((
 function start(){
   document.getElementById("lock").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
-  render(); paintFresh(); refresh();
+  render(); paintFresh(); refresh(); liveConnect();
   clearInterval(start._p); clearInterval(start._f);
   start._p = setInterval(refresh, POLL_MS);
   start._f = setInterval(paintFresh, 1000);
 }
-document.addEventListener("visibilitychange", () => { if (!document.hidden && PASS) refresh(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && PASS){ refresh(); if (!LIVE.es) liveConnect(); } });
 if (!VIEWS.some(v => v.id === VIEW)) VIEW = "home";
 if (PASS) start(); else lockOut("");
 </script>
