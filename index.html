@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0a0d13">
+<title>Shlomicom · חדר בקרה</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0d13; --side:#0e121a; --surface:#121824; --card:#151c2a; --card2:#1a2233; --line:#232c3f; --line2:#2d3850;
+  --text:#e8ebf2; --muted:#8b95ab; --dim:#5f6980;
+  --accent:#8b6cff; --accent2:#5ad1ff; --ok:#34d399; --warn:#f5b041; --bad:#ff6b6b;
+  --claude:#e08a5f; --codex:#19c39c; --agy:#5b9cff;
+  --r:16px; --r2:12px; --gut:16px;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Heebo,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100dvh}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent2)}
+.hidden{display:none!important}
+
+/* ---------- lock screen ---------- */
+.lock{min-height:100dvh;display:grid;place-items:center;padding:24px var(--gut);
+  background:radial-gradient(1200px 600px at 80% -10%,#2a1f5c55,transparent 60%),radial-gradient(900px 500px at 0% 110%,#0f4a5c44,transparent 60%),var(--bg)}
+.lock-card{width:min(420px,100%);background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 30px 80px #0008}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-weight:900;font-size:22px;
+  background:conic-gradient(from 200deg,var(--accent),var(--accent2),var(--accent));color:#0a0d13}
+.brand h1{margin:0;font-size:20px;font-weight:800;letter-spacing:.2px}
+.brand small{display:block;color:var(--muted);font-size:13px;font-weight:500}
+.lock p{color:var(--muted);line-height:1.6;margin:18px 0}
+.field{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.field label{font-size:13px;color:var(--muted)}
+.input{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:12px;padding:13px 14px;outline:none;transition:border .15s}
+.input:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;
+  background:var(--accent);color:#fff;transition:transform .08s,filter .15s}
+.btn:hover{filter:brightness(1.08)} .btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--text)}
+.btn.block{width:100%}
+.check{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin:4px 0 18px}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin-top:10px}
+
+/* ---------- app shell ---------- */
+.app{display:grid;grid-template-columns:1fr;min-height:100dvh}
+.side{display:none}
+.main{min-width:0;padding:0 var(--gut) calc(88px + env(safe-area-inset-bottom))}
+.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 12px;
+  background:linear-gradient(var(--bg) 70%,transparent)}
+.topbar .brand h1{font-size:17px}
+.topbar .logo{width:36px;height:36px;border-radius:11px;font-size:18px}
+.fresh{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:7px 12px;border-radius:999px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex:none}
+.dot.live{background:var(--ok);box-shadow:0 0 0 0 #34d39988;animation:pulse 1.8s infinite}
+.dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #34d39977}70%{box-shadow:0 0 0 9px #34d39900}100%{box-shadow:0 0 0 0 #34d39900}}
+
+.bottomnav{position:fixed;inset:auto 0 0 0;z-index:10;display:grid;grid-template-columns:repeat(5,1fr);
+  background:#0e121af2;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.navbtn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;color:var(--muted);font-size:11px;font-weight:500;padding:6px 2px;border-radius:12px;cursor:pointer;position:relative}
+.navbtn svg{width:22px;height:22px}
+.navbtn.on{color:var(--text)} .navbtn.on svg{color:var(--accent)}
+.badge{position:absolute;top:2px;inset-inline-start:calc(50% + 6px);background:var(--bad);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:0 5px;min-width:16px;text-align:center}
+
+h2.sec{font-size:15px;font-weight:700;color:var(--muted);margin:26px 0 12px;display:flex;align-items:center;justify-content:space-between;letter-spacing:.2px}
+h2.sec .more{font-size:13px;color:var(--accent2);background:none;border:0;cursor:pointer}
+
+/* ---------- KPIs ---------- */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:899px){.kpi:not(.money){padding:12px}.kpi:not(.money) .num{font-size:30px}.kpi:not(.money) .glyph{display:none}.kpi .sub{font-size:11px}}
+.kpi{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden}
+.kpi .lbl{color:var(--muted);font-size:13px;font-weight:500}
+.kpi .num{font-size:38px;font-weight:900;line-height:1.1;margin-top:6px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.kpi .num small{font-size:18px;color:var(--muted);font-weight:700;margin-inline-start:4px}
+.kpi .sub{color:var(--dim);font-size:12px;margin-top:4px}
+.kpi.money{grid-column:1/-1;background:radial-gradient(400px 160px at 10% 0%,#8b6cff33,transparent 70%),linear-gradient(180deg,var(--card2),var(--card))}
+.kpi.money .num{font-size:52px}
+.kpi .glyph{position:absolute;inset-inline-end:12px;top:12px;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:#ffffff0a;color:var(--muted)}
+.kpi .glyph svg{width:17px;height:17px}
+.ok{color:var(--ok)} .bad{color:var(--bad)} .warnc{color:var(--warn)}
+
+/* ---------- workers ---------- */
+.workers{display:grid;grid-template-columns:1fr;gap:12px}
+.wcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.wcard.active{border-color:#8b6cff66;box-shadow:0 0 0 1px #8b6cff22,0 12px 40px #0006;background:linear-gradient(180deg,#1b1f38,var(--card) 60%)}
+.whead{display:flex;align-items:center;gap:12px}
+.avatar{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-weight:800;font-size:19px;flex:none;color:#0a0d13}
+.wname{font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px}
+.wrole{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wmeta{flex:1;min-width:0}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;background:#ffffff0d;color:var(--muted);white-space:nowrap}
+.chip.on{background:#34d3991f;color:var(--ok)} .chip.ext{background:#5ad1ff1a;color:var(--accent2)}
+.chip.fail{background:#ff6b6b1f;color:var(--bad)}
+.wrow{display:flex;flex-wrap:wrap;gap:6px}
+.now{background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+.now .k{color:var(--dim);font-size:12px;display:block;margin-bottom:2px}
+.term{background:#070a0f;border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;font-family:var(--mono);font-size:11.5px;line-height:1.65;color:#aeb8cc;
+  max-height:230px;overflow:auto;direction:ltr;text-align:left}
+.term div{white-space:pre-wrap;overflow-wrap:anywhere;unicode-bidi:plaintext}
+.term .t{color:var(--dim)} .term .w{color:#e8ebf2} .term .tool{color:#c9b6ff} .term .res{color:#6f7a90} .term .x{color:var(--bad)} .term .fin{color:var(--ok)}
+details.logd summary{cursor:pointer;color:var(--muted);font-size:13px;list-style:none;display:flex;align-items:center;gap:6px}
+details.logd summary::-webkit-details-marker{display:none}
+details.logd[open] summary{margin-bottom:8px}
+.idle-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.idle{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 10px;min-width:0}
+.idle .avatar{width:32px;height:32px;border-radius:10px;font-size:15px;opacity:.9}
+.idle b{font-size:14px;display:block} .idle span{font-size:12px;color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- feeds ---------- */
+.feed{display:flex;flex-direction:column;gap:8px}
+.msg{display:flex;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 12px;min-width:0}
+.msg .avatar{width:34px;height:34px;border-radius:11px;font-size:15px}
+.msg .body{flex:1;min-width:0}
+.msg .hdr{display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.msg .hdr b{color:var(--text);font-size:14px}
+.msg .hdr time{margin-inline-start:auto;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
+.msg .txt{margin-top:3px;font-size:14.5px;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap}
+.msg .txt.clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.msg.chair{border-color:#f5b04155;background:linear-gradient(180deg,#2a2213,var(--card) 70%)}
+.msg.sys .txt{color:#b9c1d3}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.tab{background:var(--surface);border:1px solid var(--line);color:var(--muted);padding:7px 12px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer}
+.tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.empty{color:var(--dim);text-align:center;padding:28px 10px;background:var(--card);border:1px dashed var(--line2);border-radius:var(--r)}
+
+/* ---------- receipts ---------- */
+.rc{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 12px}
+.pill{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px}
+.pill.pass{background:#34d39922;color:var(--ok)} .pill.fail{background:#ff6b6b22;color:var(--bad)}
+.rc .who{font-weight:700;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc time{color:var(--dim);font-size:12px}
+.rc .cmd{grid-column:1/-1;font-family:var(--mono);font-size:11.5px;color:var(--muted);direction:ltr;text-align:left;overflow-wrap:anywhere;background:#070a0f;border-radius:8px;padding:6px 8px}
+.rc .why{grid-column:1/-1;color:var(--bad);font-size:13px}
+
+/* ---------- compose ---------- */
+.compose{background:linear-gradient(180deg,#221d10,var(--card));border:1px solid #f5b04144;border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.compose textarea{min-height:90px;resize:vertical}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row .input{flex:1;min-width:140px}
+.note{color:var(--muted);font-size:13px;line-height:1.6}
+.toast{position:fixed;inset-inline:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:20;background:var(--card2);border:1px solid var(--line2);border-radius:14px;padding:12px 14px;box-shadow:0 20px 50px #000a;font-size:14px}
+
+/* ---------- desktop ---------- */
+@media (min-width:900px){
+  :root{--gut:28px}
+  .app{grid-template-columns:260px 1fr}
+  .side{display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100dvh;background:var(--side);border-inline-end:1px solid var(--line);padding:22px 16px;overflow:auto}
+  .side nav{display:flex;flex-direction:column;gap:4px}
+  .side .navbtn{flex-direction:row;justify-content:flex-start;gap:12px;font-size:15px;padding:11px 12px;color:var(--muted)}
+  .side .navbtn.on{background:#8b6cff1f;color:var(--text)}
+  .side .badge{position:static;margin-inline-start:auto}
+  .side .mini{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .side .mini .lbl{color:var(--muted);font-size:12px}
+  .side .mini .big{font-size:30px;font-weight:900}
+  .side .foot{margin-top:auto;color:var(--dim);font-size:12px;display:flex;flex-direction:column;gap:8px}
+  .bottomnav{display:none}
+  .main{padding-bottom:40px}
+  .topbar .brand{visibility:hidden}
+  .kpis{grid-template-columns:1.4fr 1fr 1fr 1fr}
+  .kpi.money{grid-column:auto}
+  .workers{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+  .cols{display:grid;grid-template-columns:1.3fr 1fr;gap:22px;align-items:start}
+  .toast{inset-inline:auto 24px;bottom:24px;max-width:380px}
+}
+@media (min-width:1500px){ .workers{grid-template-columns:repeat(3,1fr)} }
+</style>
+</head>
+<body>
+
+<!-- lock -->
+<section id="lock" class="lock hidden">
+  <form class="lock-card" id="lockForm" autocomplete="off">
+    <div class="brand"><div class="logo">S</div><div><h1>Shlomicom</h1><small>חדר הבקרה של היו"ר</small></div></div>
+    <p>הנתונים מוצפנים. מקלידים את מילת הסיסמה פעם אחת, והיא נשמרת רק במכשיר הזה. היא לא נשלחת לשום מקום — הפענוח קורה כאן בדפדפן.</p>
+    <div class="field"><label for="pass">מילת סיסמה לחדר הבקרה</label>
+      <input class="input" id="pass" type="password" autocomplete="current-password" dir="ltr" required></div>
+    <label class="check"><input type="checkbox" id="remember" checked> לזכור במכשיר הזה</label>
+    <button class="btn block" type="submit">כניסה</button>
+    <div class="err" id="lockErr"></div>
+  </form>
+</section>
+
+<!-- app -->
+<div id="app" class="app hidden">
+  <aside class="side">
+    <div class="brand"><div class="logo">S</div><div><h1>Shlomicom</h1><small>חדר בקרה</small></div></div>
+    <nav id="sideNav"></nav>
+    <div class="mini"><div class="lbl">הכנסות</div><div class="big" id="sideMoney">₪0</div></div>
+    <div class="mini"><div class="lbl">עובדים פעילים</div><div class="big" id="sideActive">0/3</div></div>
+    <div class="foot">
+      <span id="sideHost"></span>
+      <button class="btn ghost" id="lockBtn" type="button">נעילה</button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="brand"><div class="logo">S</div><div><h1>Shlomicom</h1></div></div>
+      <span class="fresh" id="fresh"><span class="dot" id="freshDot"></span><span id="freshTxt">מתחבר…</span></span>
+    </header>
+    <div id="view"></div>
+  </main>
+  <nav class="bottomnav" id="bottomNav"></nav>
+</div>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+"use strict";
+/* ================= config ================= */
+const POLL_MS = 10000;
+const INBOX_REPO = "shlomicom-hq-inbox";
+const onPages = location.hostname.endsWith("github.io");
+const OWNER = onPages ? location.hostname.split(".")[0] : "shlomi2005";
+const REPO = onPages ? (location.pathname.split("/").filter(Boolean)[0] || "shlomicom-hq") : "shlomicom-hq";
+const LS = {
+  get(k){ try{ return localStorage.getItem(k) }catch{ return null } },
+  set(k,v){ try{ localStorage.setItem(k,v) }catch{} },
+  del(k){ try{ localStorage.removeItem(k) }catch{} },
+};
+let PASS = LS.get("hq.pass") || sessionStorage.getItem?.("hq.pass") || null;
+let DATA = null, LAST_OK = 0, LAST_ERR = "", VIEW = (location.hash || "#home").slice(1), PRIV_TAB = null;
+
+/* ================= crypto (WebCrypto) ================= */
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const ub64 = u => btoa(String.fromCharCode(...u));
+const keyCache = new Map();
+async function deriveKey(pass, saltB64, iter){
+  const id = saltB64 + ":" + iter;
+  if (keyCache.has(id)) return keyCache.get(id);
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({name:"PBKDF2", hash:"SHA-256", salt:b64(saltB64), iterations:iter},
+    base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+  keyCache.set(id, key); return key;
+}
+async function decryptEnv(env, pass){
+  if (env.v !== 1 || env.alg !== "AES-256-GCM" || !(env.iter >= 200000)) throw new Error("פורמט לא מוכר");
+  const key = await deriveKey(pass, env.salt, env.iter);
+  const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64(env.iv)}, key, b64(env.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+async function encryptObj(obj, pass){
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const iter = 250000, sb = ub64(salt);
+  const key = await deriveKey(pass, sb, iter);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, new TextEncoder().encode(JSON.stringify(obj))));
+  return {v:1, alg:"AES-256-GCM", kdf:"PBKDF2-SHA256", iter, salt:sb, iv:ub64(iv), ct:ub64(ct)};
+}
+
+/* ================= fetch ================= */
+async function fetchEnvelope(){
+  const t = Date.now();
+  const token = LS.get("hq.token");
+  if (onPages && token){
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/data.enc.json?ref=data&t=${t}`,
+      {headers:{Accept:"application/vnd.github.raw+json", Authorization:`Bearer ${token}`}, cache:"no-store"});
+    if (r.ok) return r.json();
+  }
+  const url = onPages ? `https://raw.githubusercontent.com/${OWNER}/${REPO}/data/data.enc.json?t=${t}` : `./data.enc.json?t=${t}`;
+  const r = await fetch(url, {cache:"no-store"});
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+async function refresh(){
+  if (!PASS) return;
+  try{
+    const env = await fetchEnvelope();
+    const d = await decryptEnv(env, PASS);
+    if (!DATA || d.seq >= DATA.seq){ DATA = d; LAST_OK = Date.now(); LAST_ERR = ""; render(); }
+  }catch(e){
+    if (e && e.name === "OperationError"){ lockOut("מילת הסיסמה לא נכונה"); return; }
+    LAST_ERR = e.message || String(e);
+  }
+  paintFresh();
+}
+
+/* ================= helpers ================= */
+function h(tag, attrs, ...kids){
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs || {})){
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "style") el.style.cssText = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()){ if (c == null || c === false) continue; el.append(c instanceof Node ? c : document.createTextNode(String(c))); }
+  return el;
+}
+const ICON = {
+  home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  team:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.6c2.9.2 5.5 2.1 5.5 5.4"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+  lock:'<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  receipt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  crown:'<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
+  money:'<path d="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3.2S9.5 10.8 12 11.3s4.5 1.3 4.5 3.4-2 3.3-4.5 3.3-4.5-1.2-4.5-3"/>',
+  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+};
+const icon = (n) => { const s = document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("viewBox","0 0 24 24"); s.setAttribute("fill","none"); s.setAttribute("stroke","currentColor"); s.setAttribute("stroke-width","1.8"); s.setAttribute("stroke-linecap","round"); s.setAttribute("stroke-linejoin","round"); s.innerHTML = ICON[n]; return s; };
+const ENGINE_COLOR = {claude:"var(--claude)", codex:"var(--codex)", agy:"var(--agy)"};
+const ENGINE_NAME = {claude:"Claude", codex:"Codex", agy:"Antigravity"};
+function member(slug){ return (DATA?.workers || []).find(w => w.slug === slug); }
+function nameOf(slug){ if (slug === "chairman") return "שלמה"; if (slug === "all") return "כולם"; if (slug === "system") return "מערכת"; return member(slug)?.name || slug; }
+function avatar(slug){
+  const m = member(slug);
+  const bg = slug === "chairman" ? "var(--warn)" : (m ? ENGINE_COLOR[m.engine] : "#6b7280");
+  return h("div", {class:"avatar", style:`background:${bg}`}, (nameOf(slug) || "?").trim()[0]);
+}
+const tsOf = s => { const t = Date.parse(s); return isNaN(t) ? 0 : t; };
+function hhmm(s){ const t = tsOf(s); if (!t) return ""; return new Date(t).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"}); }
+function ago(ms){ const s = Math.max(0, Math.round(ms/1000)); if (s < 60) return `לפני ${s} שנ׳`; const m = Math.round(s/60); if (m < 60) return `לפני ${m} דק׳`; const hr = Math.round(m/60); return hr < 48 ? `לפני ${hr} שע׳` : `לפני ${Math.round(hr/24)} ימים`; }
+function dur(fromIso){ const s = Math.max(0, Math.round((Date.now()-tsOf(fromIso))/1000)); const m = Math.floor(s/60); return m < 60 ? `${m} דק׳` : `${Math.floor(m/60)}:${String(m%60).padStart(2,"0")} שע׳`; }
+const isToday = s => { const t = tsOf(s); if (!t) return false; const d = new Date(t), n = new Date(); return d.toDateString() === n.toDateString(); };
+function toast(txt, ms=4000){ const el = document.getElementById("toast"); el.textContent = txt; el.classList.remove("hidden"); clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.add("hidden"), ms); }
+
+function nowWriting(w){
+  const lines = w.log_tail || [];
+  for (let i = lines.length-1; i >= 0; i--){ const m = lines[i].match(/^\d\d:\d\d:\d\d ✎ (.*)$/); if (m) return m[1]; }
+  for (let i = lines.length-1; i >= 0; i--){ const m = lines[i].match(/^\d\d:\d\d:\d\d ⚙ (.*)$/); if (m) return "מריץ: " + m[1]; }
+  return lines.length ? lines[lines.length-1].replace(/^\d\d:\d\d:\d\d /,"") : null;
+}
+function termLine(l){
+  const m = l.match(/^(\d\d:\d\d:\d\d) (.*)$/); const t = m ? m[1] : "", rest = m ? m[2] : l;
+  const cls = rest.startsWith("✎") ? "w" : rest.startsWith("⚙") ? "tool" : /^\s*(↳|│)/.test(rest) ? "res" : /^(\s*✗)/.test(rest) ? "x" : rest.startsWith("■") ? "fin" : "";
+  return h("div", {}, h("span",{class:"t"}, t ? t + " " : ""), h("span",{class:cls}, rest));
+}
+
+/* ================= views ================= */
+const VIEWS = [
+  {id:"home", label:"סקירה", icon:"home"},
+  {id:"team", label:"עובדים", icon:"team"},
+  {id:"corridor", label:"מסדרון", icon:"chat"},
+  {id:"lines", label:"קווים", icon:"crown"},
+  {id:"receipts", label:"קבלות", icon:"receipt"},
+];
+function nav(){
+  const counts = {
+    team: DATA ? DATA.active_count : 0,
+    receipts: DATA ? DATA.receipts.filter(r => !r.pass && isToday(r.ts)).length : 0,
+  };
+  for (const [id, host] of [["sideNav","side"],["bottomNav","bottom"]]){
+    const el = document.getElementById(id); el.replaceChildren();
+    for (const v of VIEWS){
+      const b = h("button", {class:"navbtn" + (VIEW === v.id ? " on" : ""), type:"button", "aria-label":v.label, onclick:()=>go(v.id)}, icon(v.icon), h("span",{}, v.label));
+      if (counts[v.id]) b.append(h("span",{class:"badge", style: v.id === "team" ? "background:var(--ok);color:#06150f" : ""}, counts[v.id]));
+      el.append(b);
+    }
+  }
+}
+function go(id){ VIEW = id; history.replaceState(null, "", "#" + id); render(); window.scrollTo({top:0}); }
+
+function kpis(){
+  const d = DATA, today = d.receipts.filter(r => isToday(r.ts));
+  const pass = today.filter(r => r.pass).length, fail = today.length - pass;
+  const msgsToday = d.corridor.filter(m => isToday(m.ts)).length;
+  const rev = Number(d.money?.revenue_ils || 0);
+  return h("div",{class:"kpis"},
+    h("div",{class:"kpi money"}, h("div",{class:"glyph"}, icon("money")), h("div",{class:"lbl"},"הכנסות"),
+      h("div",{class:"num"}, "₪" + rev.toLocaleString("he-IL")), h("div",{class:"sub"}, d.money?.note || "")),
+    h("div",{class:"kpi"}, h("div",{class:"glyph"}, icon("bolt")), h("div",{class:"lbl"},"עובדים פעילים"),
+      h("div",{class:"num"}, d.active_count, h("small",{}, "/" + d.max_parallel)), h("div",{class:"sub"}, "תקרה: " + d.max_parallel + " במקביל")),
+    h("div",{class:"kpi"}, h("div",{class:"glyph"}, icon("receipt")), h("div",{class:"lbl"},"קבלות היום"),
+      h("div",{class:"num"}, h("span",{class:"ok"}, pass), h("small",{}, " / "), h("span",{class: fail ? "bad" : ""}, fail)), h("div",{class:"sub"}, "עברו / נכשלו")),
+    h("div",{class:"kpi"}, h("div",{class:"glyph"}, icon("chat")), h("div",{class:"lbl"},"הודעות היום"),
+      h("div",{class:"num"}, msgsToday), h("div",{class:"sub"}, "במסדרון")),
+  );
+}
+function workerCard(w){
+  const st = w.status;
+  const chip = st === "active" ? h("span",{class:"chip on"}, h("span",{class:"dot live"}), "עובד/ת עכשיו")
+    : st === "external" ? h("span",{class:"chip ext"}, h("span",{class:"dot live", style:"background:var(--accent2)"}), "פעיל/ה (מחוץ לכלי)")
+    : w.last_exit?.status === "נכשל" ? h("span",{class:"chip fail"}, "נכשל בפעם האחרונה") : h("span",{class:"chip"}, "פנוי/ה");
+  const writing = nowWriting(w);
+  const card = h("article",{class:"wcard" + (st !== "idle" ? " active" : "")},
+    h("div",{class:"whead"}, avatar(w.slug),
+      h("div",{class:"wmeta"}, h("div",{class:"wname"}, w.name), h("div",{class:"wrole"}, w.role)), chip),
+    h("div",{class:"wrow"},
+      h("span",{class:"chip", style:`color:${ENGINE_COLOR[w.engine]}`}, ENGINE_NAME[w.engine] || w.engine),
+      h("span",{class:"chip", dir:"ltr"}, w.model),
+      w.started ? h("span",{class:"chip"}, "רץ " + dur(w.started)) : null,
+      w.log_updated ? h("span",{class:"chip"}, "לוג " + ago(Date.now() - tsOf(w.log_updated))) : null),
+    w.task ? h("div",{class:"now"}, h("span",{class:"k"},"משימה"), h("span",{dir:"ltr"}, w.task)) : null,
+    writing ? h("div",{class:"now"}, h("span",{class:"k"}, st !== "idle" ? "עכשיו כותב/ת" : "דבר אחרון"), h("span",{dir:"auto"}, writing)) : null,
+  );
+  if ((w.log_tail || []).length){
+    const d = h("details",{class:"logd"}, h("summary",{}, "▸ לוג חי (" + w.log_tail.length + " שורות אחרונות)"), h("div",{class:"term"}, w.log_tail.map(termLine)));
+    if (st !== "idle") d.open = true;
+    card.append(d);
+  }
+  return card;
+}
+function idleChip(w){
+  const last = w.last_exit ? `${w.last_exit.status} · ${ago(Date.now()-tsOf(w.last_exit.ended))}` : w.role;
+  return h("button",{class:"idle", type:"button", onclick:()=>go("team")}, avatar(w.slug), h("div",{style:"min-width:0;text-align:start"}, h("b",{}, w.name), h("span",{}, last)));
+}
+function msgEl(m, clamp){
+  const chair = m.from === "chairman";
+  const sys = /^(התחלתי משימה|סיים משימה|נכשל משימה|נעצר משימה|קבלה (עברה|נכשלה))/.test(m.text || "");
+  return h("div",{class:"msg" + (chair ? " chair" : "") + (sys ? " sys" : "")}, avatar(m.from),
+    h("div",{class:"body"},
+      h("div",{class:"hdr"}, h("b",{}, nameOf(m.from)), h("span",{}, "← " + nameOf(m.to)), m.via === "hq" ? h("span",{class:"chip"},"מחדר הבקרה") : null, h("time",{title:m.ts}, hhmm(m.ts))),
+      h("div",{class:"txt" + (clamp ? " clamp" : ""), dir:"auto", title: clamp ? "לחץ להרחבה" : null, onclick:(e)=>e.currentTarget.classList.remove("clamp")}, m.text)));
+}
+function receiptEl(r){
+  return h("div",{class:"rc"},
+    h("span",{class:"pill " + (r.pass ? "pass" : "fail")}, r.pass ? "עברה" : "נכשלה"),
+    h("div",{class:"who"}, nameOf(r.slug) + " · ", h("span",{dir:"ltr"}, r.task_id)),
+    h("time",{}, hhmm(r.ts)),
+    r.check ? h("div",{class:"cmd"}, "$ " + r.check + "   → exit " + r.exit) : null,
+    (!r.pass && r.failures?.length) ? h("div",{class:"why"}, r.failures.join(" · ")) : null);
+}
+function feed(list, n, clamp){ const items = list.slice().sort((a,b)=>tsOf(b.ts)-tsOf(a.ts)).slice(0, n); return items.length ? h("div",{class:"feed"}, items.map(m => msgEl(m, clamp))) : h("div",{class:"empty"},"אין הודעות עדיין"); }
+
+function compose(){
+  const token = LS.get("hq.token");
+  const sel = h("select",{class:"input", id:"to"}, h("option",{value:"all"},"לכולם"), (DATA.workers || []).map(w => h("option",{value:w.slug}, w.name + " — " + w.role.split("—")[0].trim())));
+  const ta = h("textarea",{class:"input", id:"msg", dir:"auto", placeholder:"מה תרצה להגיד לצוות?", maxlength:"4000"});
+  const box = h("div",{class:"compose"},
+    h("div",{class:"note"}, "ההודעה מוצפנת לפני שהיא יוצאת מהמכשיר, והמק מעביר אותה לנמען ומעיר אותו."),
+    sel, ta);
+  if (!token){
+    box.append(h("div",{class:"note"}, "כדי לשלוח מכאן צריך פעם אחת להדביק מפתח גישה (הוראות בקו הפרטי של ליאור). בינתיים — מהמק: ", h("code",{dir:"ltr"}, 'bin/chairman <slug|all> "..."')),
+      h("div",{class:"row"}, h("input",{class:"input", id:"tok", type:"password", dir:"ltr", placeholder:"github_pat_…", autocomplete:"off"}),
+        h("button",{class:"btn ghost", type:"button", onclick:()=>{ const v = document.getElementById("tok").value.trim(); if (!/^github_pat_[A-Za-z0-9_]{20,}$/.test(v)) return toast("זה לא נראה כמו מפתח גישה של GitHub"); LS.set("hq.token", v); toast("המפתח נשמר במכשיר הזה"); render(); }}, "שמור מפתח")));
+  } else {
+    box.append(h("div",{class:"row"},
+      h("button",{class:"btn", type:"button", onclick: async (ev)=>{
+        const text = ta.value.trim(); if (!text) return;
+        ev.target.disabled = true;
+        try{
+          const env = await encryptObj({to: sel.value, text, ts: new Date().toISOString()}, PASS);
+          const r = await fetch(`https://api.github.com/repos/${OWNER}/${INBOX_REPO}/issues`, {method:"POST",
+            headers:{Authorization:`Bearer ${LS.get("hq.token")}`, Accept:"application/vnd.github+json", "Content-Type":"application/json"},
+            body: JSON.stringify({title:"hq", body: JSON.stringify(env)})});
+          if (!r.ok) throw new Error("GitHub " + r.status);
+          ta.value = ""; toast(`נשלח ל${nameOf(sel.value)}. המק יעביר ויעיר את הנמען תוך כחצי דקה.`, 6000);
+        }catch(e){ toast("השליחה נכשלה: " + e.message, 6000); }
+        ev.target.disabled = false;
+      }}, "שלח"),
+      h("button",{class:"btn ghost", type:"button", onclick:()=>{ LS.del("hq.token"); render(); }}, "הסר מפתח")));
+  }
+  return box;
+}
+
+function render(){
+  nav();
+  if (!DATA) return;
+  document.getElementById("sideMoney").textContent = "₪" + Number(DATA.money?.revenue_ils || 0).toLocaleString("he-IL");
+  document.getElementById("sideActive").textContent = `${DATA.active_count}/${DATA.max_parallel}`;
+  document.getElementById("sideHost").textContent = "מקור: " + DATA.host + " · #" + DATA.seq;
+  const v = document.getElementById("view");
+  const openScroll = [...v.querySelectorAll(".term")].map(t => t.scrollTop);
+  const focusId = document.activeElement?.id, draft = document.getElementById("msg")?.value, toSel = document.getElementById("to")?.value;
+  if ((focusId === "msg" || focusId === "tok" || focusId === "to") && render._busy !== true){ render._pending = true; return; } // don't yank the keyboard away while Shlomo types
+  const active = DATA.workers.filter(w => w.status !== "idle"), idle = DATA.workers.filter(w => w.status === "idle");
+  let out;
+  if (VIEW === "home"){
+    out = [kpis(),
+      h("h2",{class:"sec"}, "עובדים עכשיו", h("button",{class:"more", onclick:()=>go("team")}, "כולם ›")),
+      active.length ? h("div",{class:"workers"}, active.map(workerCard)) : h("div",{class:"empty"}, "אף אחד לא עובד כרגע"),
+      h("div",{class:"cols"},
+        h("div",{}, h("h2",{class:"sec"}, "מסדרון", h("button",{class:"more", onclick:()=>go("corridor")}, "הכל ›")), feed(DATA.corridor, 6, true)),
+        h("div",{}, h("h2",{class:"sec"}, "קבלות אחרונות", h("button",{class:"more", onclick:()=>go("receipts")}, "הכל ›")),
+          DATA.receipts.length ? h("div",{class:"feed"}, DATA.receipts.slice(-5).reverse().map(receiptEl)) : h("div",{class:"empty"},"אין קבלות עדיין"))),
+      h("h2",{class:"sec"}, "שאר הצוות"), h("div",{class:"idle-list"}, idle.map(idleChip))];
+  } else if (VIEW === "team"){
+    out = [h("h2",{class:"sec"}, `כל הצוות · ${DATA.workers.length}`), h("div",{class:"workers"}, [...active, ...idle].map(workerCard))];
+  } else if (VIEW === "corridor"){
+    out = [h("h2",{class:"sec"}, "מסדרון · כל ההודעות"), feed(DATA.corridor, 120)];
+  } else if (VIEW === "lines"){
+    const slugs = Object.keys(DATA.private || {}).filter(s => (DATA.private[s] || []).length);
+    if (!PRIV_TAB || !slugs.includes(PRIV_TAB)) PRIV_TAB = slugs[0] || null;
+    out = [h("h2",{class:"sec"}, "כתוב לצוות"), compose(),
+      h("h2",{class:"sec"}, "הודעות שלך לצוות"), feed(DATA.chairman, 30),
+      h("h2",{class:"sec"}, "קווים פרטיים אליך"),
+      slugs.length ? h("div",{}, h("div",{class:"tabs"}, slugs.map(s => h("button",{class:"tab" + (s === PRIV_TAB ? " on" : ""), type:"button", onclick:()=>{ PRIV_TAB = s; render(); }}, nameOf(s) + " · " + DATA.private[s].length))),
+        feed(DATA.private[PRIV_TAB] || [], 40)) : h("div",{class:"empty"}, "אף עובד לא כתב לך בקו הפרטי עדיין")];
+  } else if (VIEW === "receipts"){
+    const all = DATA.receipts.slice().reverse(), p = all.filter(r => r.pass).length;
+    out = [h("h2",{class:"sec"}, `קבלות · ${p} עברו · ${all.length - p} נכשלו`), all.length ? h("div",{class:"feed"}, all.map(receiptEl)) : h("div",{class:"empty"},"אין קבלות עדיין")];
+  }
+  v.replaceChildren(...out.flat());
+  if (draft && document.getElementById("msg")) document.getElementById("msg").value = draft;
+  if (toSel && document.getElementById("to")) document.getElementById("to").value = toSel;
+  [...v.querySelectorAll(".term")].forEach((t,i) => { t.scrollTop = openScroll[i] ?? t.scrollHeight; });
+}
+function paintFresh(){
+  const dot = document.getElementById("freshDot"), txt = document.getElementById("freshTxt");
+  if (!DATA){ dot.className = "dot" + (LAST_ERR ? " bad" : ""); txt.textContent = LAST_ERR ? "אין נתונים: " + LAST_ERR : "מתחבר…"; return; }
+  const age = Date.now() - tsOf(DATA.generated);
+  dot.className = "dot " + (age < 60000 ? "live" : age < 180000 ? "warn" : "bad");
+  txt.textContent = "עודכן " + ago(age) + (LAST_ERR ? " · שגיאת רשת" : "");
+}
+
+/* ================= lock ================= */
+function lockOut(msg){
+  PASS = null; LS.del("hq.pass"); DATA = null;
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("lock").classList.remove("hidden");
+  document.getElementById("lockErr").textContent = msg || "";
+}
+document.getElementById("lockForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const p = document.getElementById("pass").value; const err = document.getElementById("lockErr");
+  err.textContent = "בודק…";
+  try{
+    const d = await decryptEnv(await fetchEnvelope(), p);
+    PASS = p; if (document.getElementById("remember").checked) LS.set("hq.pass", p);
+    DATA = d; LAST_OK = Date.now(); err.textContent = ""; document.getElementById("pass").value = "";
+    start();
+  }catch(ex){ err.textContent = ex && ex.name === "OperationError" ? "מילת הסיסמה לא נכונה" : "לא הצלחתי לטעון נתונים: " + (ex.message || ex); }
+});
+document.getElementById("lockBtn").addEventListener("click", () => lockOut(""));
+document.addEventListener("focusout", () => { if (render._pending){ setTimeout(() => { if (!["msg","tok","to"].includes(document.activeElement?.id)){ render._pending = false; render(); } }, 50); } });
+
+function start(){
+  document.getElementById("lock").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  render(); paintFresh(); refresh();
+  clearInterval(start._p); clearInterval(start._f);
+  start._p = setInterval(refresh, POLL_MS);
+  start._f = setInterval(paintFresh, 1000);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && PASS) refresh(); });
+if (!VIEWS.some(v => v.id === VIEW)) VIEW = "home";
+if (PASS) start(); else lockOut("");
+</script>
+</body>
+</html>
