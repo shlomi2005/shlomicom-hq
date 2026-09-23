@@ -379,7 +379,7 @@ const galWho = it => (it.slug ? nameOf(it.slug) : "לא ידוע") + " · " + dm
 function shotEl(it){
   return h("button", {class:"shot", type:"button", title: it.path, onclick:()=>openShot(it)},
     h("div", {class:"ph"}, galImg(it), it.kind === "video" ? h("span", {class:"play"}, `▶ וידאו · ${Math.round(it.dur || 0)} שנ׳`) : null),
-    h("div", {class:"cap"}, h("b", {}, it.caption), h("span", {}, galWho(it)), it.task_id ? h("span", {dir:"ltr"}, it.task_id) : null));
+    h("div", {class:"cap"}, h("b", {}, it.caption), h("span", {}, `${it.slug ? nameOf(it.slug) : "לא ידוע"} · ${hhmm(it.ts)} · ${ago(Date.now() - tsOf(it.ts))}`), it.task_id ? h("span", {dir:"ltr"}, it.task_id) : null));
 }
 function openShot(it){
   const lb = document.getElementById("lb");
