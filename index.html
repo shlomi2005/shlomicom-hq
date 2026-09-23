@@ -76,7 +76,7 @@ a{color:var(--accent2)}
 .msg.new,.rc.new{animation:flashin 2.4s ease-out}
 @keyframes pulse{0%{box-shadow:0 0 0 0 #34d39977}70%{box-shadow:0 0 0 9px #34d39900}100%{box-shadow:0 0 0 0 #34d39900}}
 
-.bottomnav{position:fixed;inset:auto 0 0 0;z-index:10;display:grid;grid-template-columns:repeat(5,1fr);
+.bottomnav{position:fixed;inset:auto 0 0 0;z-index:10;display:grid;grid-template-columns:repeat(6,1fr);
   background:#0e121af2;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
 .navbtn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;color:var(--muted);font-size:11px;font-weight:500;padding:6px 2px;border-radius:12px;cursor:pointer;position:relative}
 .navbtn svg{width:22px;height:22px}
@@ -127,6 +127,22 @@ details.logd[open] summary{margin-bottom:8px}
 .idle .avatar{width:32px;height:32px;border-radius:10px;font-size:15px;opacity:.9}
 .idle b{font-size:14px;display:block} .idle span{font-size:12px;color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+/* ---------- CEO + queue + engines ---------- */
+.ceo{background:radial-gradient(420px 140px at 90% 0%,#34d39922,transparent 70%),linear-gradient(180deg,var(--card2),var(--card));border:1px solid #34d39955;border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ceo.off{border-color:#ff6b6b55;background:linear-gradient(180deg,#2a1717,var(--card))}
+.ceo .evs{display:flex;flex-wrap:wrap;gap:6px}
+.ops{display:grid;grid-template-columns:1fr;gap:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.panel h3{margin:0;font-size:14px;color:var(--muted);font-weight:700}
+.qrow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);padding:8px 10px;min-width:0}
+.qrow .avatar{width:30px;height:30px;border-radius:9px;font-size:14px}
+.qrow .qm{flex:1;min-width:0;font-size:13px}.qrow .qm b{display:block;font-size:14px}
+.qrow .qm span{color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eng{display:flex;align-items:center;gap:8px;font-size:14px;padding:8px 10px;border-radius:var(--r2);background:#ff6b6b14;border:1px solid #ff6b6b44;color:#ffc9c9;overflow-wrap:anywhere}
+.eng.okk{background:#34d39912;border-color:#34d39933;color:var(--ok)}
+.chip.on .dot.live{background:var(--ok)}
+@media (min-width:900px){ .ops{grid-template-columns:1fr 1fr} }
+
 /* ---------- feeds ---------- */
 .feed{display:flex;flex-direction:column;gap:8px}
 .msg{display:flex;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 12px;min-width:0}
@@ -159,6 +175,30 @@ details.logd[open] summary{margin-bottom:8px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .row .input{flex:1;min-width:140px}
 .note{color:var(--muted);font-size:13px;line-height:1.6}
+/* ---------- gallery ---------- */
+.strip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,46%);gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none}
+.strip .shot{scroll-snap-align:start}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.shot{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;min-width:0;padding:0;text-align:start;color:inherit}
+.shot:hover{border-color:var(--line2)}
+.shot .ph{position:relative;aspect-ratio:16/10;background:linear-gradient(110deg,#121824 30%,#1a2233 50%,#121824 70%) 0 0/300% 100%;animation:shimmer 1.4s linear infinite}
+.shot .ph.done{animation:none;background:#070a0f}
+.shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s}
+.shot img.on{opacity:1}
+.shot .play{position:absolute;inset-inline-start:8px;bottom:8px;background:#000b;color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px}
+.shot .cap{padding:8px 10px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.shot .cap b{font-size:13.5px;font-weight:700;direction:ltr;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shot .cap span{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes shimmer{to{background-position:-300% 0}}
+.held{display:flex;flex-direction:column;gap:6px}
+.held div{background:var(--card);border:1px dashed #f5b04166;border-radius:12px;padding:9px 12px;font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.held b{color:var(--text);font-weight:600;direction:ltr;unicode-bidi:plaintext}
+.lb{position:fixed;inset:0;z-index:30;background:#05070bf2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+.lb img{max-width:100%;max-height:calc(100dvh - 140px);border-radius:10px;box-shadow:0 20px 60px #000}
+.lb .meta{color:var(--muted);font-size:14px;text-align:center;line-height:1.6;max-width:720px}
+.lb .meta b{color:var(--text);direction:ltr;unicode-bidi:plaintext}
+.lb .x{position:absolute;top:calc(12px + env(safe-area-inset-top));inset-inline-end:12px;width:44px;height:44px;border-radius:12px;border:1px solid var(--line2);background:var(--card);color:var(--text);font-size:22px;cursor:pointer}
+@media (min-width:900px){ .strip{grid-auto-flow:row;grid-template-columns:repeat(4,1fr);grid-auto-columns:auto;overflow:visible} .gal{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))} }
 .toast{position:fixed;inset-inline:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:20;background:var(--card2);border:1px solid var(--line2);border-radius:14px;padding:12px 14px;box-shadow:0 20px 50px #000a;font-size:14px}
 
 /* ---------- desktop ---------- */
@@ -225,6 +265,7 @@ details.logd[open] summary{margin-bottom:8px}
   <nav class="bottomnav" id="bottomNav"></nav>
 </div>
 <div id="toast" class="toast hidden"></div>
+<div id="lb" class="lb hidden" role="dialog" aria-modal="true" aria-label="תמונה"></div>
 
 <script>
 "use strict";
@@ -293,8 +334,85 @@ async function fetchEnvelope(){
   if (!r.ok) throw new Error("HTTP " + r.status);
   return r.json();
 }
+/* ================= gallery (gallery branch: encrypted manifest + one encrypted WebP per shot) ================= */
+const GAL = {data:null, urls:new Map(), loading:new Set(), failed:new Map()};
+const galBase = () => onPages ? `https://raw.githubusercontent.com/${OWNER}/${REPO}/gallery` : "./gallery";
+async function decryptBytes(env, pass){
+  if (env.v !== 1 || env.alg !== "AES-256-GCM" || !(env.iter >= 200000)) throw new Error("פורמט לא מוכר");
+  const key = await deriveKey(pass, env.salt, env.iter);
+  return new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM", iv:b64(env.iv)}, key, b64(env.ct)));
+}
+async function refreshGallery(){
+  try{
+    const t = Date.now(), token = LS.get("hq.token");
+    let r = null;
+    if (onPages && token) r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/gallery.enc.json?ref=gallery&t=${t}`,
+      {headers:{Accept:"application/vnd.github.raw+json", Authorization:`Bearer ${token}`}, cache:"no-store"});
+    if (!r || !r.ok) r = await fetch(`${galBase()}/gallery.enc.json?t=${t}`, {cache:"no-store"});
+    if (!r.ok) return;
+    const g = await decryptEnv(await r.json(), PASS);
+    if (g.t !== "gallery" || (GAL.data && GAL.data.generated === g.generated)) return;
+    GAL.data = g; render();
+  }catch{} // the photo feed never locks the room: a missing/old gallery just shows nothing new
+}
+function galLoad(it){
+  if (GAL.urls.has(it.id) || GAL.loading.has(it.id) || Date.now() - (GAL.failed.get(it.id) || 0) < 20000) return;
+  GAL.loading.add(it.id);
+  (async () => {
+    try{
+      const r = await fetch(`${galBase()}/${it.file}` + (GAL.failed.has(it.id) ? `?r=${Date.now()}` : ""));
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const bytes = await decryptBytes(await r.json(), PASS);
+      const url = URL.createObjectURL(new Blob([bytes], {type: it.type || "image/webp"}));
+      GAL.urls.set(it.id, url); GAL.failed.delete(it.id);
+      document.querySelectorAll(`img[data-gid="${it.id}"]`).forEach(im => { im.src = url; });
+    }catch{ GAL.failed.set(it.id, Date.now()); } // new on raw.githubusercontent may 404 for a moment: retry later
+    GAL.loading.delete(it.id);
+  })();
+}
+function galImg(it){
+  const im = h("img", {alt: it.caption, "data-gid": it.id, decoding:"async", onload:(e)=>{ e.target.classList.add("on"); e.target.parentNode?.classList.add("done"); }});
+  if (GAL.urls.has(it.id)) im.src = GAL.urls.get(it.id); else galLoad(it);
+  return im;
+}
+const galWho = it => (it.slug ? nameOf(it.slug) : "לא ידוע") + " · " + dmhm(it.ts) + " · " + ago(Date.now() - tsOf(it.ts));
+function shotEl(it){
+  return h("button", {class:"shot", type:"button", title: it.path, onclick:()=>openShot(it)},
+    h("div", {class:"ph"}, galImg(it), it.kind === "video" ? h("span", {class:"play"}, `▶ וידאו · ${Math.round(it.dur || 0)} שנ׳`) : null),
+    h("div", {class:"cap"}, h("b", {}, it.caption), h("span", {}, galWho(it)), it.task_id ? h("span", {dir:"ltr"}, it.task_id) : null));
+}
+function openShot(it){
+  const lb = document.getElementById("lb");
+  const close = () => { lb.classList.add("hidden"); lb.replaceChildren(); document.removeEventListener("keydown", esc); };
+  const esc = (e) => { if (e.key === "Escape") close(); };
+  lb.replaceChildren(
+    h("button", {class:"x", type:"button", "aria-label":"סגור", onclick:close}, "×"),
+    galImg(it),
+    h("div", {class:"meta"}, h("b", {}, it.name), h("br"), galWho(it) + (it.task_id ? " · " : ""), it.task_id ? h("span", {dir:"ltr"}, it.task_id) : null,
+      it.kind === "video" ? h("div", {}, `וידאו של ${Math.round(it.dur || 0)} שניות — כאן רק תמונת הפתיחה (הקובץ המלא נשאר במק: `, h("span", {dir:"ltr"}, it.path), ")") : null));
+  lb.onclick = (e) => { if (e.target === lb) close(); };
+  document.addEventListener("keydown", esc);
+  lb.classList.remove("hidden");
+}
+function galleryView(){
+  const g = GAL.data;
+  if (!g) return [h("h2",{class:"sec"}, "תמונות"), h("div",{class:"empty"}, "טוען תמונות…")];
+  const out = [h("h2",{class:"sec"}, `תמונות · ${g.items.length} אחרונות` + (g.total > g.items.length ? ` מתוך ${g.total}` : "")),
+    g.items.length ? h("div",{class:"gal"}, g.items.map(shotEl)) : h("div",{class:"empty"}, "עוד אין צילומים")];
+  if ((g.held || []).length) out.push(h("h2",{class:"sec"}, `ממתין לבדיקה של לואיגי · ${g.held.length}`),
+    h("div",{class:"note", style:"margin-bottom:8px"}, "צילומי טלפון שלא עברו את בדיקת הפרטיות האוטומטית. רק השם מוצג כאן, לא התמונה."),
+    h("div",{class:"held"}, g.held.map(x => h("div",{}, h("b",{}, x.name), ` · ${x.slug ? nameOf(x.slug) : "לא ידוע"} · ${dmhm(x.ts)} — ${x.why}`))));
+  return out;
+}
+function galleryStrip(){
+  const items = (GAL.data?.items || []).slice(0, 4);
+  if (!items.length) return null;
+  return [h("h2",{class:"sec"}, "צילומים אחרונים", h("button",{class:"more", onclick:()=>go("gallery")}, "כל התמונות ›")), h("div",{class:"strip"}, items.map(shotEl))];
+}
+
 async function refresh(){
   if (!PASS) return;
+  refreshGallery();
   try{
     const env = await fetchEnvelope();
     const d = await decryptEnv(env, PASS);
@@ -383,7 +501,7 @@ function applyLive(){ // live items stay until the (slower) GitHub snapshot has 
     const wr = LIVE.writing[w.slug];
     if (wr && wr._at > gen){ w.log_tail = [...(w.log_tail || []).filter(l => l !== wr.line), wr.line].slice(-14); w.log_updated = new Date(wr._at).toISOString(); }
   }
-  DATA.active_count = (DATA.workers || []).filter(w => w.status !== "idle").length;
+  DATA.active_count = (DATA.workers || []).filter(w => w.status !== "idle" && w.slug !== "luigi").length; // the CEO takes no worker slot
 }
 
 /* ================= helpers ================= */
@@ -408,6 +526,7 @@ const ICON = {
   crown:'<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
   money:'<path d="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3.2S9.5 10.8 12 11.3s4.5 1.3 4.5 3.4-2 3.3-4.5 3.3-4.5-1.2-4.5-3"/>',
   bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
 };
 const icon = (n) => { const s = document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("viewBox","0 0 24 24"); s.setAttribute("fill","none"); s.setAttribute("stroke","currentColor"); s.setAttribute("stroke-width","1.8"); s.setAttribute("stroke-linecap","round"); s.setAttribute("stroke-linejoin","round"); s.innerHTML = ICON[n]; return s; };
 const ENGINE_COLOR = {claude:"var(--claude)", codex:"var(--codex)", agy:"var(--agy)"};
@@ -445,6 +564,7 @@ const VIEWS = [
   {id:"corridor", label:"מסדרון", icon:"chat"},
   {id:"lines", label:"קווים", icon:"crown"},
   {id:"receipts", label:"קבלות", icon:"receipt"},
+  {id:"gallery", label:"תמונות", icon:"image"},
 ];
 function nav(){
   const counts = {
@@ -501,6 +621,36 @@ function workerCard(w){
     card.append(d);
   }
   return card;
+}
+const EV_NAME = {finished:"סיים", failed:"נכשל", stopped:"נעצר", quota_stop:"נעצר·מכסה", receipt_pass:"קבלה ✓", receipt_fail:"קבלה ✗",
+  quota:"מכסה", private:"קו פרטי", to_luigi:"פנייה אליו", queue_stuck:"תקוע בתור"};
+function dmhm(s){ const t = tsOf(s); if (!t) return ""; const d = new Date(t); return `${d.getDate()}.${d.getMonth()+1} ${hhmm(s)}`; }
+function ceoCard(){
+  const L = DATA.luigi; if (!L) return null;
+  const w = member("luigi") || {};
+  const running = w.status && w.status !== "idle";
+  const chip = L.awake ? h("span",{class:"chip on"}, h("span",{class:"dot live"}), "ער · עוקב")
+    : h("span",{class:"chip fail"}, "לא עוקב — ה-notifier כבוי");
+  let doing;
+  if (running){ const wr = nowWriting(w); doing = `מטפל ב-${L.handling || "?"} אירועים` + (wr ? " · " + wr : ""); }
+  else if (L.pending) doing = `${L.pending} אירועים חדשים — יתעורר אחרי דקה של שקט`;
+  else doing = "ממתין לאירוע הבא (עובד מסיים / קבלה / מכסה / הודעה אליו)";
+  const handled = L.handled_at ? `${hhmm(L.handled_at)} · ${L.handled_count || 0} אירועים · ${ago(Date.now() - tsOf(L.handled_at))}` : "עוד לא טיפל באירוע";
+  return h("article",{class:"ceo" + (L.awake ? "" : " off")},
+    h("div",{class:"whead"}, avatar("luigi"), h("div",{class:"wmeta"}, h("div",{class:"wname"}, "לואיגי"), h("div",{class:"wrole"}, "מנכ״ל · מתעורר לבד על אירועים, בלי שעון")), chip),
+    h("div",{class:"now"}, h("span",{class:"k"}, "אירוע אחרון שטופל"), h("span",{}, handled)),
+    h("div",{class:"now"}, h("span",{class:"k"}, running ? "עכשיו" : "מצב"), h("span",{dir:"auto"}, doing)),
+    (L.recent || []).length ? h("div",{class:"evs"}, L.recent.slice(-6).reverse().map(e => h("span",{class:"chip", title:e.ts}, `${hhmm(e.ts)} ${EV_NAME[e.type] || e.type} · ${nameOf(e.slug)}`))) : null);
+}
+function opsPanels(){
+  const q = DATA.queue || [], en = DATA.engines || [];
+  return h("div",{class:"ops"},
+    h("div",{class:"panel"}, h("h3",{}, `תור הפעלות · ${q.length}`),
+      q.length ? q.map((it, i) => h("div",{class:"qrow"}, avatar(it.slug), h("div",{class:"qm"}, h("b",{}, `#${i+1} ${nameOf(it.slug)}`),
+        h("span",{dir:"auto"}, `${it.task_id} · מחכה ${dur(it.queued)} · ${it.why || ""}`)))) : h("div",{class:"eng okk"}, "התור ריק — כל הפעלה יצאה לדרך")),
+    h("div",{class:"panel"}, h("h3",{}, "מנועים"),
+      en.length ? en.map(e => h("div",{class:"eng", title:e.reason}, h("span",{}, `${e.name} — מכסה נגמרה עד `, h("bdi",{dir:"ltr"}, dmhm(e.until)), e.until_known ? "" : " (משוער)")))
+        : h("div",{class:"eng okk"}, "כל המנועים זמינים")));
 }
 function idleChip(w){
   const last = w.last_exit ? `${w.last_exit.status} · ${ago(Date.now()-tsOf(w.last_exit.ended))}` : w.role;
@@ -565,10 +715,10 @@ function render(){
   const openScroll = [...v.querySelectorAll(".term")].map(t => t.scrollTop);
   const focusId = document.activeElement?.id, draft = document.getElementById("msg")?.value, toSel = document.getElementById("to")?.value;
   if ((focusId === "msg" || focusId === "tok" || focusId === "to") && render._busy !== true){ render._pending = true; return; } // don't yank the keyboard away while Shlomo types
-  const active = DATA.workers.filter(w => w.status !== "idle"), idle = DATA.workers.filter(w => w.status === "idle");
+  const active = DATA.workers.filter(w => w.status !== "idle"), idle = DATA.workers.filter(w => w.status === "idle" && (VIEW !== "home" || w.slug !== "luigi"));
   let out;
   if (VIEW === "home"){
-    out = [kpis(),
+    out = [kpis(), galleryStrip(), ceoCard(), opsPanels(),
       h("h2",{class:"sec"}, "עובדים עכשיו", h("button",{class:"more", onclick:()=>go("team")}, "כולם ›")),
       active.length ? h("div",{class:"workers"}, active.map(workerCard)) : h("div",{class:"empty"}, "אף אחד לא עובד כרגע"),
       h("div",{class:"cols"},
@@ -591,8 +741,10 @@ function render(){
   } else if (VIEW === "receipts"){
     const all = DATA.receipts.slice().reverse(), p = all.filter(r => r.pass).length;
     out = [h("h2",{class:"sec"}, `קבלות · ${p} עברו · ${all.length - p} נכשלו`), all.length ? h("div",{class:"feed"}, all.map(receiptEl)) : h("div",{class:"empty"},"אין קבלות עדיין")];
+  } else if (VIEW === "gallery"){
+    out = galleryView();
   }
-  v.replaceChildren(...out.flat());
+  v.replaceChildren(...out.flat().filter(Boolean));
   if (draft && document.getElementById("msg")) document.getElementById("msg").value = draft;
   if (toSel && document.getElementById("to")) document.getElementById("to").value = toSel;
   [...v.querySelectorAll(".term")].forEach((t,i) => { t.scrollTop = openScroll[i] ?? t.scrollHeight; });
@@ -636,6 +788,7 @@ const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 })();
 function lockOut(msg){
   PASS = null; LS.del("hq.pass"); DATA = null; liveClose(); LIVE.state = "off";
+  GAL.urls.forEach(u => URL.revokeObjectURL(u)); GAL.urls.clear(); GAL.data = null; document.getElementById("lb").classList.add("hidden");
   document.getElementById("app").classList.add("hidden");
   document.getElementById("lock").classList.remove("hidden");
   const err = document.getElementById("lockErr"); err.textContent = msg || ""; err.classList.remove("net");
