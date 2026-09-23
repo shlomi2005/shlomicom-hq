@@ -343,7 +343,9 @@ async function fetchEnvelope(){
 const GAL = {data:null, urls:new Map(), loading:new Set(), failed:new Map(), shown:new Set()};
 /* zero spoilers (AGENTS.md): a shot flagged "spoiler" shows neither image nor name until Shlomo taps. In memory only —
    every reload hides it again. */
-const hidden = it => it.spoiler && !GAL.shown.has(it.id || it.path);
+/* backstop: a mech-* / 004-* file is hidden even if an old manifest forgot to flag it */
+const spoilOf = it => it.spoiler || (/^(mech[-_]|0\d\d)/i.test(it.name || "") ? "מכניקה חדשה" : null);
+const hidden = it => spoilOf(it) && !GAL.shown.has(it.id || it.path);
 const reveal = it => { GAL.shown.add(it.id || it.path); render(); };
 const galBase = () => onPages ? `https://raw.githubusercontent.com/${OWNER}/${REPO}/gallery` : "./gallery";
 async function decryptBytes(env, pass){
@@ -387,7 +389,7 @@ function galImg(it){
 const galWho = it => (it.slug ? nameOf(it.slug) : "לא ידוע") + " · " + dmhm(it.ts) + " · " + ago(Date.now() - tsOf(it.ts));
 function shotEl(it){
   if (hidden(it)) return h("button", {class:"shot spoil", type:"button", "aria-label":"ספוילר — להציג?", onclick:()=>reveal(it)},
-    h("div", {class:"ph"}, h("i", {}, "🙈"), h("b", {}, "ספוילר — להציג?"), h("span", {}, it.spoiler)),
+    h("div", {class:"ph"}, h("i", {}, "🙈"), h("b", {}, "ספוילר — להציג?"), h("span", {}, spoilOf(it))),
     h("div", {class:"cap"}, h("b", {}, "·····"), h("span", {}, `${it.slug ? nameOf(it.slug) : "לא ידוע"} · ${hhmm(it.ts)} · ${ago(Date.now() - tsOf(it.ts))}`)));
   return h("button", {class:"shot", type:"button", title: it.path, onclick:()=>openShot(it)},
     h("div", {class:"ph"}, galImg(it), it.kind === "video" ? h("span", {class:"play"}, `▶ וידאו · ${Math.round(it.dur || 0)} שנ׳`) : null),
